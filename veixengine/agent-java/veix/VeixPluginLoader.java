@@ -21,6 +21,7 @@ public final class VeixPluginLoader {
    */
   public static int loadBundledTestPlugin(String gameDir) {
     String gd = gameDir != null ? gameDir : ".";
+    VeixMcBridgeLoader.ensureLoaded(gd);
     VeixNativeItems.ensureLoaded(gd);
     File dll = new File(gd, "veix/plugins/veix_test_mod.dll");
     if (!dll.isFile()) {

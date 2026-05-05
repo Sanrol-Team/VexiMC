@@ -2,7 +2,7 @@
 name = "veix-mc-bridge"
 version.workspace = true
 edition.workspace = true
-description = "JNI + C ABI：C++ 模组通过 veix_mc_register_item 走 Java VeixRegistryBridge，贴近原版 ITEM 注册"
+description = "JNI + C ABI：veix_mc_register_item / veix_mc_register_item_by_key → Java VeixRegistryBridge（原版 ITEM 注册）"
 license.workspace = true
 rust-version.workspace = true
 

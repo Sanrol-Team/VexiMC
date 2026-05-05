@@ -5,8 +5,9 @@ import java.net.URI;
 import java.security.CodeSource;
 
 /**
- * 加载 Rust 构建的 {@code veix_mc_bridge.dll}（JNI_OnLoad 缓存 JavaVM，供 C++/Rust C ABI 调用
- * {@code veix_mc_register_item}）。
+ * 加载 Rust 构建的 {@code veix_mc_bridge.dll}（JNI_OnLoad 缓存 JavaVM，供 C ABI 调用
+ * {@code veix_mc_register_item}、{@code veix_mc_register_item_by_key}、{@code veix_mc_java_vm_ready}；
+ * 见 {@code native/veix-mod-sdk/include/veix/mod_api.h}）。
  */
 public final class VeixMcBridgeLoader {
 

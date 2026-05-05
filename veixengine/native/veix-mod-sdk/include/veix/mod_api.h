@@ -35,6 +35,14 @@ VEIX_MOD_API int veix_mc_set_java_vm(void *java_vm);
 VEIX_MOD_API int veix_mc_register_item(const char *namespace_utf8,
                                      const char *path_utf8);
 
+/**
+ * 与 Java {@code VeixRegistryBridge.registerItemByKey} 相同：完整 ID（UTF-8），如 {@code "veix:ruby_gem"}。
+ */
+VEIX_MOD_API int veix_mc_register_item_by_key(const char *namespaced_id_utf8);
+
+/** 若已通过 JNI_OnLoad 或 veix_mc_set_java_vm 缓存 JavaVM 则返回 1，否则 0。 */
+VEIX_MOD_API int veix_mc_java_vm_ready(void);
+
 #ifdef __cplusplus
 }
 #endif

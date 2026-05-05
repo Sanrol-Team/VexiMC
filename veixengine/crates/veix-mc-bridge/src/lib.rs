@@ -1,8 +1,8 @@
 //! Minecraft Java 版物品注册桥：DLL 由 Agent `System.load`，`JNI_OnLoad` 缓存 `JavaVM`。
-//! C++ 模组链接 `veix_mc_register_item`（见 `native/veix-mod-sdk/include/veix/mod_api.h`）。
+//! C++ 模组链接 `veix_mc_register_item` / `veix_mc_register_item_by_key`（见 `mod_api.h`）。
 
 use jni::objects::{JValue, JValueOwned};
-use jni::JavaVM;
+use jni::{JNIEnv, JavaVM};
 use std::ffi::{c_char, c_int, c_void, CStr};
 use std::sync::Mutex;
 
@@ -16,6 +16,14 @@ pub extern "system" fn JNI_OnLoad(vm: *mut jni_sys::JavaVM, _: *mut c_void) -> j
         }
     }
     jni_sys::JNI_VERSION_1_8
+}
+
+#[no_mangle]
+pub extern "system" fn JNI_OnUnload(vm: *mut jni_sys::JavaVM, _: *mut c_void) {
+    let _ = vm;
+    if let Ok(mut g) = JVM.lock() {
+        *g = None;
+    }
 }
 
 /// C++/宿主若在未触发 JNI_OnLoad 的环境下加载本 DLL，可显式传入由 `JNI_GetCreatedJavaVMs` 取得的 VM。
@@ -35,35 +43,28 @@ pub extern "C" fn veix_mc_set_java_vm(vm: *mut jni_sys::JavaVM) -> c_int {
     }
 }
 
+/// 供原生侧探测：`JNI_OnLoad` / `veix_mc_set_java_vm` 是否已成功缓存 VM。
 #[no_mangle]
-pub extern "C" fn veix_mc_register_item(namespace: *const c_char, path: *const c_char) -> c_int {
-    if namespace.is_null() || path.is_null() {
-        return -100;
+pub extern "C" fn veix_mc_java_vm_ready() -> c_int {
+    match JVM.lock() {
+        Ok(g) => {
+            if g.is_some() {
+                1
+            } else {
+                0
+            }
+        }
+        Err(_) => 0,
     }
-    let ns = unsafe { CStr::from_ptr(namespace) }.to_string_lossy();
-    let p = unsafe { CStr::from_ptr(path) }.to_string_lossy();
-    let full = format!("{}:{}", ns, p);
+}
 
-    let guard = match JVM.lock() {
-        Ok(g) => g,
-        Err(_) => return -1,
-    };
-    let vm = match guard.as_ref() {
-        Some(v) => v,
-        None => return -1,
-    };
-
-    let mut env = match vm.attach_current_thread_permanently() {
-        Ok(e) => e,
-        Err(_) => return -2,
-    };
-
+fn register_item_by_key_java(env: &mut JNIEnv, full_id: &str) -> c_int {
     let cls = match env.find_class("veix/VeixRegistryBridge") {
         Ok(c) => c,
         Err(_) => return -3,
     };
 
-    let jstr = match env.new_string(full) {
+    let jstr = match env.new_string(full_id) {
         Ok(s) => s,
         Err(_) => return -4,
     };
@@ -82,4 +83,47 @@ pub extern "C" fn veix_mc_register_item(namespace: *const c_char, path: *const c
         Ok(i) => i as c_int,
         Err(_) => -99,
     }
+}
+
+fn with_attached_env<F>(f: F) -> c_int
+where
+    F: for<'a> FnOnce(&'a mut JNIEnv<'a>) -> c_int,
+{
+    let guard = match JVM.lock() {
+        Ok(g) => g,
+        Err(_) => return -1,
+    };
+    let vm = match guard.as_ref() {
+        Some(v) => v,
+        None => return -1,
+    };
+
+    let mut env = match vm.attach_current_thread_permanently() {
+        Ok(e) => e,
+        Err(_) => return -2,
+    };
+
+    f(&mut env)
+}
+
+#[no_mangle]
+pub extern "C" fn veix_mc_register_item(namespace: *const c_char, path: *const c_char) -> c_int {
+    if namespace.is_null() || path.is_null() {
+        return -100;
+    }
+    let ns = unsafe { CStr::from_ptr(namespace) }.to_string_lossy();
+    let p = unsafe { CStr::from_ptr(path) }.to_string_lossy();
+    let full = format!("{}:{}", ns, p);
+
+    with_attached_env(|env| register_item_by_key_java(env, &full))
+}
+
+/// 与 Java {@code registerItemByKey} 相同入参：完整命名空间 ID（如 {@code veix:ruby_gem}）。
+#[no_mangle]
+pub extern "C" fn veix_mc_register_item_by_key(namespaced_id: *const c_char) -> c_int {
+    if namespaced_id.is_null() {
+        return -100;
+    }
+    let full = unsafe { CStr::from_ptr(namespaced_id) }.to_string_lossy();
+    with_attached_env(|env| register_item_by_key_java(env, &full))
 }
