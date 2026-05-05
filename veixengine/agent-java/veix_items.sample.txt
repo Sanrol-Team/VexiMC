@@ -1,0 +1,3 @@
+# 复制到游戏目录 veix/veix_items.txt（每行一个命名空间 id）
+veix:ruby_gem
+veix:sapphire_shard

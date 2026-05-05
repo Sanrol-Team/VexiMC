@@ -1,0 +1,21 @@
+[package]
+name = "veix-mc-launch"
+version.workspace = true
+edition.workspace = true
+description = "VeixEngine Minecraft 客户端启动器（Windows）：附加 Veix Java Agent 并启动游戏"
+rust-version.workspace = true
+
+[[bin]]
+name = "veix-mc-launch"
+path = "src/main.rs"
+
+[build-dependencies]
+ureq = "2"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+md5 = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }

@@ -1,0 +1,22 @@
+[package]
+name = "veix-engine"
+version.workspace = true
+edition.workspace = true
+description = "VeixEngine Build1 — Veix 注入层编排：DLL/SO 代理、IAT 劫持、JIT 跳板、影子对象映射"
+rust-version.workspace = true
+
+[lib]
+name = "veix_engine"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["inject-native"]
+# Windows 下编译并链接 C++ 注入原语；其它平台仅 Rust 桩
+inject-native = []
+
+[build-dependencies]
+cc = "1.2"
+
+[dependencies]
+thiserror = "2"
+parking_lot = "0.12"

@@ -1,0 +1,16 @@
+[package]
+name = "veix-mc-bridge"
+version.workspace = true
+edition.workspace = true
+description = "JNI + C ABI：C++ 模组通过 veix_mc_register_item 走 Java VeixRegistryBridge，贴近原版 ITEM 注册"
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "veix_mc_bridge"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+jni = "0.21"
+jni-sys = "0.3.0"
+libc = "0.2"
